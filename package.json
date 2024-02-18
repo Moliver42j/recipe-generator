@@ -1,0 +1,15 @@
+{
+  "name": "recipetest",
+  "version": "1.0.0",
+  "description": "Test of Recipe app to GPT API",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "openai": "^4.28.0",
+    "sam": "^0.0.7"
+  }
+}
