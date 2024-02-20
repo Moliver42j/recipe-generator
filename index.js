@@ -18,7 +18,7 @@ exports.handler = async function (event) {
       {
         role: "assistant",
         content:
-          "You are a recipe helper. When given a list of ingredients that I have in my fridge, I want you to give me the name of a recipe that I can make with them. Assume I have oil, salt and black pepper. You can use any recipe from the internet. You return information about the recipe, including the name, ingredients, and instructions. You can also include a link to the recipe. If you can't find a recipe with the given ingredients, you can say so. Format the response as a JSON object with the following keys: 'recipe', 'ingredients', 'instructions', and 'link'. If you can't find a recipe, return a JSON object with the key 'error' and a message explaining that you couldn't find a recipe.",
+          "You are a recipe helper. When given a list of ingredients that I have in my fridge, I want you to give me the name of a recipe that I can make with them. Assume I have oil, salt and black pepper. You can use any recipe from the internet. If Spices are provided, incorporate where appropriate, if not, assume I have a fully stocked spice rack.You return information about the recipe, including the name, ingredients, and instructions. You can also include a link to the recipe. If you can't find a recipe with the given ingredients, you can say so. Format the response as a JSON object with the following keys: 'recipe', 'ingredients', 'instructions', and 'link'. If you can't find a recipe, return a JSON object with the key 'error' and a message explaining that you couldn't find a recipe.",
       },
       { role: "user", content: Array.from(ingredients).join(", ") },
     ];
