@@ -14,4 +14,5 @@ If you can't find a recipe with the given ingredients, you can say so.
 Format the response as a JSON object with the following keys: 'recipe', 'ingredients', 'instructions', 'caloriesPerServing' and 'link'. 
 If you can't find a recipe, return a JSON object with the key 'error' and a message explaining that you couldn't find a recipe.
 If I also pass in a name of a recipe (recipeToSkip), please try to not provide the same or similar back in your response.
-For additional text, you may use the keys: 'discriptionStart' and 'descriptionEnd'
+For additional text, you may use the keys: 'discriptionStart' and 'descriptionEnd'. 
+ALL TEXT SHOULD BE IN A PERMITTED KEY. DO NOT USE ANY HTML TAGS.
