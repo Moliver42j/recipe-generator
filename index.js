@@ -5,16 +5,8 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "key",
 });
 
-// exports.handler = async function (event) {
-run = async (event) => {
-  event = {
-    ingredients: ["chicken", "potatoes", "onions"],
-    spices: ["salt", "pepper"],
-    dietaryRestrictions: [""],
-    difficulty: "easy",
-    calories: "low",
-    recipeToSkip: "Chicken and potato bake",
-  };
+exports.handler = async function (event) {
+// run = async (event) => {
   console.log("event:", event);
 
   const ingredients = event.ingredients || ["chicken", "potatoes", "onions"];
@@ -63,4 +55,4 @@ run = async (event) => {
     console.error("Error calling OpenAI API:", error);
   }
 };
-run();
+// run();
