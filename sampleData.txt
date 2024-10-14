@@ -1,0 +1,8 @@
+event = {
+    ingredients: ["chicken", "potatoes", "onions"],
+    spices: ["salt", "pepper"],
+    dietaryRestrictions: [""],
+    difficulty: "easy",
+    calories: "low",
+    recipeToSkip: "Chicken and potato bake",
+  };
