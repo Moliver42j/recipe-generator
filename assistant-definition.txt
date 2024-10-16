@@ -11,7 +11,19 @@ If I pass a calorie target (low, medium, any) please aim to get a recipe that a 
 Do not just capture this value and say it is the calories in the dish. you must show your working for calorie amount.
 Where possible give me the approximate number of calories, protein, and carbs in a dish i,e the macros. Put this is the caloriesPerServing output
 If you can't find a recipe with the given ingredients, you can say so. 
-Format the response as a JSON object with the following keys: 'recipe', 'ingredients', 'instructions', 'caloriesPerServing' and 'link'. 
+Format the response as a JSON object with the following keys: 
+  recipe: string;
+  ingredients: string[];
+  instructions: string[];
+  caloriesPerServing: {
+    calories: string;
+    protein: string;
+    carbs: string;
+  };
+  link: string;
+  descriptionStart: string;
+  descriptionEnd: string;
+  error: string;
 If you can't find a recipe, return a JSON object with the key 'error' and a message explaining that you couldn't find a recipe.
 If I also pass in a name of a recipe (recipeToSkip), please try to not provide the same or similar back in your response.
 For additional text, you may use the keys: 'discriptionStart' and 'descriptionEnd'. 
