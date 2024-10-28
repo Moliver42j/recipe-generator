@@ -8,7 +8,7 @@ const openai = new OpenAI({
 exports.handler = async function (event) {
 // run = async (event) => {
   console.log("event:", event);
-
+  const type = event.type || 'single';
   const ingredients = event.ingredients || ["chicken", "potatoes", "onions"];
   const spices = event.spices || [];
   const dietaryRestrictions = event.dietaryRestrictions || [];
@@ -24,10 +24,20 @@ exports.handler = async function (event) {
     recipeToSkip
   ]);
 
+switch(type){
+  case 'single':
+    var assistantDefinitionFileName = "assistant-definition-single.txt";
+  case 'planner':
+    var assistantDefinitionFileName = "assistant-definition-planner.txt";
+  
+  default:
+    var assistantDefinitionFileName = "assistant-definition-single.txt";
+}
+  
   try {
     // read assistant definition from the file assistant-definition.txt
     const assistantDefinition = fs.readFileSync(
-      "assistant-definition.txt",
+      assistantDefinitionFileName,
       "utf8"
     );
     const messages = [
