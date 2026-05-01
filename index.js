@@ -125,6 +125,102 @@ exports.handler = async function (event) {
     assistantDefinitionFileByType[requestType] ??
     assistantDefinitionFileByType.single;
 
+  const singleRecipeSchema = {
+    name: "single_recipe",
+    strict: true,
+    schema: {
+      type: "object",
+      properties: {
+        recipe: { type: "string" },
+        ingredients: { type: "array", items: { type: "string" } },
+        instructions: { type: "array", items: { type: "string" } },
+        caloriesPerServing: {
+          type: "object",
+          properties: {
+            calories: { type: "string" },
+            protein: { type: "string" },
+            carbs: { type: "string" },
+          },
+          required: ["calories", "protein", "carbs"],
+          additionalProperties: false,
+        },
+        link: { type: "string" },
+        descriptionStart: { type: "string" },
+        descriptionEnd: { type: "string" },
+        error: { type: "string" },
+      },
+      required: [
+        "recipe",
+        "ingredients",
+        "instructions",
+        "caloriesPerServing",
+        "link",
+        "descriptionStart",
+        "descriptionEnd",
+        "error",
+      ],
+      additionalProperties: false,
+    },
+  };
+
+  const plannerRecipeSchema = {
+    name: "planner_recipes",
+    strict: true,
+    schema: {
+      type: "object",
+      properties: {
+        recipes: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              recipe: { type: "string" },
+              ingredients: { type: "array", items: { type: "string" } },
+              instructions: { type: "array", items: { type: "string" } },
+              caloriesPerServing: {
+                type: "object",
+                properties: {
+                  calories: { type: "string" },
+                  protein: { type: "string" },
+                  carbs: { type: "string" },
+                },
+                required: ["calories", "protein", "carbs"],
+                additionalProperties: false,
+              },
+              link: { type: "string" },
+              descriptionStart: { type: "string" },
+              descriptionEnd: { type: "string" },
+              error: { type: "string" },
+            },
+            required: [
+              "recipe",
+              "ingredients",
+              "instructions",
+              "caloriesPerServing",
+              "link",
+              "descriptionStart",
+              "descriptionEnd",
+              "error",
+            ],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["recipes"],
+      additionalProperties: false,
+    },
+  };
+
+  const modelByType = {
+    single: "gpt-4o-mini",
+    planner: "gpt-4o",
+  };
+
+  const maxTokensByType = {
+    single: 1200,
+    planner: 4096,
+  };
+
   try {
     const assistantDefinition = fs.readFileSync(
       assistantDefinitionFileName,
@@ -132,25 +228,46 @@ exports.handler = async function (event) {
     );
     const messages = [
       {
-        role: "assistant",
+        role: "system",
         content: assistantDefinition,
       },
       { role: "user", content: Array.from(allIngredients).join(", ") },
     ];
+
+    const responseFormat = {
+      type: "json_schema",
+      json_schema:
+        requestType === "planner" ? plannerRecipeSchema : singleRecipeSchema,
+    };
+
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: modelByType[requestType],
       messages,
       temperature: 0.5,
-      max_tokens: 1500,
+      max_tokens: maxTokensByType[requestType],
       top_p: 1.0,
       frequency_penalty: 0.0,
       presence_penalty: 0.0,
+      response_format: responseFormat,
     });
-    console.log(response.choices[0].message.content);
+
+    const rawContent = response.choices[0].message.content;
+    console.log(rawContent);
+
+    let body = rawContent;
+    if (requestType === "planner") {
+      try {
+        const parsed = JSON.parse(rawContent);
+        body = JSON.stringify(parsed.recipes);
+      } catch {
+        // Fall back to raw content if parsing fails
+      }
+    }
+
     return {
       statusCode: 200,
       headers: corsHeaders,
-      body: response.choices[0].message.content,
+      body,
     };
   } catch (error) {
     console.error("Error calling OpenAI API:", error);
