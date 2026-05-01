@@ -4,12 +4,17 @@ const fs = require("fs");
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "key",
 });
-const assistantDefinition = fs.readFileSync("assistant-definition.txt", "utf8");
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
   "Content-Type": "application/json",
+};
+
+const assistantDefinitionFileByType = {
+  single: "assistant-definition-single.txt",
+  planner: "assistant-definition-planner.txt",
 };
 
 function parseEventPayload(event) {
@@ -41,11 +46,26 @@ function normalizeStringArray(value) {
   return [];
 }
 
+function normalizeOptionalString(value) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeOptionalNumber(value) {
+  const numberValue =
+    typeof value === "number"
+      ? value
+      : typeof value === "string"
+      ? Number(value)
+      : NaN;
+  return Number.isFinite(numberValue) && numberValue > 0
+    ? Math.floor(numberValue)
+    : null;
+}
+
 exports.handler = async function (event) {
-// run = async (event) => {
   console.log("event:", event);
 
-  if (event.httpMethod === "OPTIONS") {
+  if (event?.httpMethod === "OPTIONS") {
     return {
       statusCode: 200,
       headers: corsHeaders,
@@ -54,6 +74,7 @@ exports.handler = async function (event) {
   }
 
   const payload = parseEventPayload(event);
+  const requestType = payload.type === "planner" ? "planner" : "single";
 
   const ingredients = normalizeStringArray(payload.ingredients);
   const pantryItems = normalizeStringArray(payload.pantryItems);
@@ -61,12 +82,18 @@ exports.handler = async function (event) {
   const spices = Array.isArray(payload.spices)
     ? normalizeStringArray(payload.spices)
     : [];
-  const difficulty =
-    typeof payload.difficulty === "string" ? payload.difficulty.trim() : "";
-  const calories =
-    typeof payload.calories === "string" ? payload.calories.trim() : "";
-  const recipeToSkip =
-    typeof payload.recipeToSkip === "string" ? payload.recipeToSkip.trim() : "";
+  const difficulty = normalizeOptionalString(payload.difficulty);
+  const calories = normalizeOptionalString(payload.calories);
+  const recipeToSkip = normalizeOptionalString(payload.recipeToSkip);
+
+  const mealsToPlan =
+    normalizeOptionalNumber(payload.mealsToPlan) ??
+    normalizeOptionalNumber(payload.mealCount) ??
+    normalizeOptionalNumber(payload.numberOfMeals);
+  const maxItemsToBuy =
+    normalizeOptionalNumber(payload.maxItemsToBuy) ??
+    normalizeOptionalNumber(payload.shoppingItemsLimit) ??
+    normalizeOptionalNumber(payload.itemsToBuy);
 
   if (ingredients.length === 0) {
     return {
@@ -83,12 +110,26 @@ exports.handler = async function (event) {
     ...pantryItems,
     ...spices,
     ...dietaryRestrictions,
-    ...(difficulty ? [difficulty] : []),
-    ...(calories ? [calories] : []),
-    ...(recipeToSkip ? [recipeToSkip] : []),
+    ...(difficulty ? [`difficulty:${difficulty}`] : []),
+    ...(calories ? [`calories:${calories}`] : []),
+    ...(recipeToSkip ? [`recipeToSkip:${recipeToSkip}`] : []),
+    ...(requestType === "planner" && mealsToPlan
+      ? [`mealsToPlan:${mealsToPlan}`]
+      : []),
+    ...(requestType === "planner" && maxItemsToBuy
+      ? [`maxItemsToBuy:${maxItemsToBuy}`]
+      : []),
   ]);
 
+  const assistantDefinitionFileName =
+    assistantDefinitionFileByType[requestType] ??
+    assistantDefinitionFileByType.single;
+
   try {
+    const assistantDefinition = fs.readFileSync(
+      assistantDefinitionFileName,
+      "utf8"
+    );
     const messages = [
       {
         role: "assistant",
@@ -98,9 +139,9 @@ exports.handler = async function (event) {
     ];
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      messages: messages,
+      messages,
       temperature: 0.5,
-      max_tokens: 1000,
+      max_tokens: 1500,
       top_p: 1.0,
       frequency_penalty: 0.0,
       presence_penalty: 0.0,
@@ -115,12 +156,8 @@ exports.handler = async function (event) {
     console.error("Error calling OpenAI API:", error);
     return {
       statusCode: 500,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Content-Type": "application/json",
-      },
+      headers: corsHeaders,
       body: JSON.stringify({ error: "Failed to generate recipe" }),
     };
   }
 };
-// run();
