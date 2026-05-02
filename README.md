@@ -7,6 +7,7 @@ This Node.js application leverages the OpenAI API to suggest recipes based on th
 - Node.js (version 12.x or higher recommended)
 - An OpenAI API key
 
+
 ## Setup Instructions
 
 1. **Clone the repository**  
